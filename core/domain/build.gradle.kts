@@ -2,17 +2,26 @@ plugins {
 	alias(libs.plugins.android.library)
 	alias(libs.plugins.kotlin.android)
 	alias(libs.plugins.kotlin.kapt)
-	alias(libs.plugins.hilt.android)
 }
 
 android {
-	namespace = "com.duyts.android.common"
+	namespace = "com.duyts.android.domain"
 	compileSdk = 34
+
 	defaultConfig {
 		minSdk = 24
 
-		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 		consumerProguardFiles("consumer-rules.pro")
+	}
+
+	buildTypes {
+		release {
+			isMinifyEnabled = false
+			proguardFiles(
+				getDefaultProguardFile("proguard-android-optimize.txt"),
+				"proguard-rules.pro"
+			)
+		}
 	}
 	compileOptions {
 		sourceCompatibility = JavaVersion.VERSION_1_8
@@ -24,28 +33,13 @@ android {
 }
 
 dependencies {
-	implementation(libs.retrofit.core)
-//
-	api(libs.androidx.lifecycle.runtime.compose)
-
-	//Navigation
-	api (libs.androidx.navigation.compose)
-
-	//Hilt
-//	api (libs.javax.inject)
-	api(libs.hilt.android)
-	api(libs.androidx.navigation.compose)
-	api (libs.androidx.hilt.navigation.compose)
-	kapt(libs.hilt.android.compiler)
+	implementation(project(":core:common"))
+	implementation(project(":core:data"))
 
 	testImplementation(project(":core:test"))
-
-	testImplementation(libs.junit)
 	testImplementation (libs.mockito.mockito.core)
 	testImplementation (libs.mockito.kotlin)
-}
+	testImplementation(libs.junit)
 
-
-kapt {
-	correctErrorTypes = true
+	kapt(libs.hilt.android.compiler)
 }

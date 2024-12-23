@@ -54,6 +54,7 @@ dependencies {
 	implementation(project(":core:design"))
 	implementation(project(":core:data"))
 	implementation(project(":core:test"))
+	implementation(project(":core:domain"))
 
 	kapt(libs.hilt.android.compiler)
 }

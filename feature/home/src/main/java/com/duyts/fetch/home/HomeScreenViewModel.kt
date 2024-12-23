@@ -2,9 +2,10 @@ package com.duyts.fetch.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.duyts.android.domain.FetchHiringItemUseCase
+import com.duyts.android.domain.GetHiringItemUseCase
 import com.duyts.fetch.common.Resource.Resource
 import com.duyts.fetch.core.data.model.HiringItem
-import com.duyts.fetch.core.data.repository.AppRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -15,7 +16,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
-	private val appRepository: AppRepository,
+	private val getHiringItemUseCase: GetHiringItemUseCase,
+	private val fetchHiringItemUseCase: FetchHiringItemUseCase,
 ) : ViewModel() {
 	private val _state: StateFlow<HomeScreenState> = observeHiringItems().stateIn(
 		scope = viewModelScope,
@@ -26,12 +28,12 @@ class HomeScreenViewModel @Inject constructor(
 	val state: StateFlow<HomeScreenState> = _state
 
 	private fun observeHiringItems(): Flow<HomeScreenState> =
-		appRepository.observeHiringItems()
+		getHiringItemUseCase()
 			.map { resource ->
 				when (resource) {
 					is Resource.Success -> {
 						if (resource.data.isEmpty()) {
-							appRepository.fetchHiringItems()
+							fetchHiringItemUseCase()
 						}
 						HomeScreenState.Success(hiringItems = resource.data)
 					}

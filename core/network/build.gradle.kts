@@ -46,9 +46,12 @@ dependencies {
 	api(libs.retrofit.core)
 	implementation(libs.converter.gson)
 	implementation(libs.okhttp.logging)
-	testImplementation(libs.junit)
-
 	implementation(project(":core:common"))
+	testImplementation(project(":core:test"))
+
+	testImplementation(libs.junit)
+	testImplementation (libs.mockito.mockito.core)
+	testImplementation (libs.mockito.kotlin)
 
 	kapt(libs.hilt.android.compiler)
 }

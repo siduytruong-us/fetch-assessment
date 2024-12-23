@@ -1,6 +1,11 @@
 package com.duyts.fetch.common.network.ext
 
+import com.duyts.fetch.common.network.exception.NetworkException
+import retrofit2.HttpException
 import retrofit2.Response
+import java.io.IOException
+import java.io.Serializable
+import java.util.concurrent.TimeoutException
 
 suspend fun <T> safeApiCall(apiCall: suspend () -> Response<T>): T {
 	return try {
@@ -10,32 +15,31 @@ suspend fun <T> safeApiCall(apiCall: suspend () -> Response<T>): T {
 				response.body()
 					?: throw Exception("HTTP 200: Empty response body")
 			}
-			else -> throw Exception("HTTP Error: ${response.code()} - ${response.message()}")
+
+			else -> throw HttpException(response)
 		}
 	} catch (exception: Throwable) {
-//		handleApiError(exception)
-		throw exception
+		throw handleApiError(exception)
 	}
 }
 
-// Exception handling with detailed Resource.Error
-//private fun <T> handleApiError(exception: Throwable): String {
-//	return when (exception) {
-//		is TimeoutException -> "Request timed out. Please try again."
-//		is IOException -> "Network error. Please check your connection."
-//		is HttpException -> {
-//			when (val statusCode = exception.code()) {
-//				400 -> "Bad Request"
-//				401 -> "Unauthorized. Please check your credentials."
-//				403 -> "Forbidden. Access is denied."
-//				404 -> "Resource not found."
-//				500 -> "Internal Server Error. Please try again later."
-//				503 -> "Service Unavailable. Please try again later."
-//				else -> "Unexpected HTTP Error: $statusCode"
-//			}
-//		}
-//		is IllegalArgumentException -> "Invalid argument provided. ${exception.message}"
-//		is IllegalStateException -> "Illegal application state. ${exception.message}"
-//		else -> "Unexpected error occurred: ${exception.message}"
-//	}
-//}
+
+private fun handleApiError(exception: Throwable): NetworkException {
+	return when (exception) {
+		is TimeoutException -> NetworkException("Request timed out. Please try again.", -1)
+		is IOException -> NetworkException("Network error. Please check your connection.", -1)
+		is HttpException -> {
+			when (val statusCode = exception.code()) {
+				400 -> NetworkException("Bad Request", 400)
+				401 -> NetworkException("Unauthorized. Please check your credentials.", 401)
+				403 -> NetworkException("Forbidden. Access is denied.", 403)
+				404 -> NetworkException("Resource not found.", 404)
+				500 -> NetworkException("Internal Server Error. Please try again later.", 500)
+				503 -> NetworkException("Service Unavailable. Please try again later.", 503)
+				else -> NetworkException("Unexpected HTTP Error: $statusCode", -1)
+			}
+		}
+
+		else -> NetworkException("Unexpected error occurred: ${exception.message}", -1)
+	}
+}

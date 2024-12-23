@@ -100,6 +100,22 @@ class AppRepositoryTest {
 	}
 
 	@Test
+	fun `fetchHiringItems handle exception network response`() = runTest {
+		val exceptionMessage = "Network error occurred"
+		val exception = RuntimeException(exceptionMessage)
+		whenever(networkDataSource.getHiringItems()).thenThrow(exception)
+
+		val result = appRepository.fetchHiringItems()
+
+		assert(result is Resource.Error)
+		assertEquals(exceptionMessage, (result as Resource.Error).message)
+		assertEquals(exception, result.exception)
+
+		verify(hiringDao, never()).insertOrIgnoreHiringItems(emptyList())
+		verify(transformer, never()).transform(any<HiringItemsResponseItem>())
+	}
+
+	@Test
 	fun `fetchHiringItems ensures transformer is used`() = runTest {
 		val networkItems = listOf(
 			HiringItemsResponseItem(1, "Alice", 1),

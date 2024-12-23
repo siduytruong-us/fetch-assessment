@@ -1,5 +1,7 @@
 package com.duyts.fetch.home
 
+import com.duyts.android.domain.FetchHiringItemUseCase
+import com.duyts.android.domain.GetHiringItemUseCase
 import com.duyts.android.test.MainDispatcherRule
 import com.duyts.fetch.common.Resource.Resource
 import com.duyts.fetch.core.data.model.HiringItem
@@ -30,14 +32,23 @@ import kotlin.test.assertEquals
 class HomeScreenViewModelTest {
 	@get:Rule
 	val mainDispatcherRule = MainDispatcherRule()
+
+
 	private lateinit var viewModel: HomeScreenViewModel
 
 	@Mock
 	private lateinit var appRepository: AppRepository
 
+
+	private lateinit var getHiringItemUseCase: GetHiringItemUseCase
+
+	private lateinit var fetchHiringItemUseCase: FetchHiringItemUseCase
+
 	@Before
 	fun setup() {
 		MockitoAnnotations.openMocks(this)
+		getHiringItemUseCase = GetHiringItemUseCase(appRepository)
+		fetchHiringItemUseCase=  FetchHiringItemUseCase(appRepository)
 	}
 
 
@@ -46,7 +57,7 @@ class HomeScreenViewModelTest {
 		whenever(appRepository.observeHiringItems()).thenReturn(flowOf(Resource.Success(mapOf())))
 		whenever(appRepository.fetchHiringItems()).thenReturn(Resource.Success(Unit))
 
-		viewModel = HomeScreenViewModel(appRepository)
+		viewModel = HomeScreenViewModel(getHiringItemUseCase, fetchHiringItemUseCase)
 		val state = viewModel.state.first()
 
 		verify(appRepository).fetchHiringItems()
@@ -59,7 +70,7 @@ class HomeScreenViewModelTest {
 	fun `observeHiringItems emits Loading state`() = runTest {
 		whenever(appRepository.observeHiringItems()).thenReturn(flowOf())
 
-		viewModel = HomeScreenViewModel(appRepository)
+		viewModel = HomeScreenViewModel(getHiringItemUseCase, fetchHiringItemUseCase)
 		val state = viewModel.state.first()
 
 		assert(state is HomeScreenState.Loading)
@@ -70,7 +81,7 @@ class HomeScreenViewModelTest {
 		val errorMessage = "Network error"
 		whenever(appRepository.observeHiringItems()).thenReturn(flowOf(Resource.Error(errorMessage)))
 
-		viewModel = HomeScreenViewModel(appRepository)
+		viewModel = HomeScreenViewModel(getHiringItemUseCase, fetchHiringItemUseCase)
 		val state = viewModel.state.first()
 
 		assert(state is HomeScreenState.Error)
@@ -82,7 +93,7 @@ class HomeScreenViewModelTest {
 		val hiringItems = mapOf(1 to listOf(HiringItem("Alice", 1), HiringItem("Bob", 2)))
 		whenever(appRepository.observeHiringItems()).thenReturn(flowOf(Resource.Success(hiringItems)))
 
-		viewModel = HomeScreenViewModel(appRepository)
+		viewModel = HomeScreenViewModel(getHiringItemUseCase, fetchHiringItemUseCase)
 		val state = viewModel.state.first()
 
 		verify(appRepository, never()).fetchHiringItems()
