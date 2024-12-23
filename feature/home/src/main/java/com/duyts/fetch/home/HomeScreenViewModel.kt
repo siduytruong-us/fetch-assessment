@@ -3,7 +3,6 @@ package com.duyts.fetch.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.duyts.fetch.common.Resource.Resource
-import com.duyts.fetch.common.Resource.asResource
 import com.duyts.fetch.core.data.model.HiringItem
 import com.duyts.fetch.core.data.repository.AppRepository
 import dagger.hilt.android.lifecycle.HiltViewModel

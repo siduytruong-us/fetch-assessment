@@ -1,22 +1,17 @@
 package com.duyts.fetch.core.data.di
 
-import com.duyts.fetch.core.data.repository.AppRepository
-import com.duyts.fetch.core.data.repository.AppRepositoryImpl
 import com.duyts.fetch.core.data.transformer.DataTransformer
 import com.duyts.fetch.core.data.transformer.DataTransformerImpl
-import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class DataModule {
-
-
-	@Binds
-	abstract fun provideRepository(
-		appRepository: AppRepositoryImpl,
-	): AppRepository
+object TransformerProvider {
+	@Singleton
+	@Provides
+	fun providesDataTransformer(): DataTransformer = DataTransformerImpl()
 }

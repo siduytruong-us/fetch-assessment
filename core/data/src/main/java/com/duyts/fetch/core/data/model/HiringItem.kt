@@ -8,11 +8,11 @@ data class HiringItem(
 	val id: Int,
 )
 
-
-fun HiringItemsResponseItem.toModel() = HiringItem(
+fun HiringItemEntity.toModel() = HiringItem(
 	name = name,
 	id = id,
 )
+
 
 fun HiringItemsResponseItem.toEntity() = HiringItemEntity(
 	name = name,

@@ -30,12 +30,16 @@ fun HomeScreen(
 	viewModel: HomeScreenViewModel = hiltViewModel(),
 ) {
 	when (val state = viewModel.state.collectAsStateWithLifecycle().value) {
-		is HomeScreenState.Loading -> {
-			CircularProgressIndicator()
-		}
-
+		is HomeScreenState.Loading -> LoadingContent()
 		is HomeScreenState.Error -> ErrorContent(state)
 		is HomeScreenState.Success -> HomeContent(state, onRefresh = {})
+	}
+}
+
+@Composable
+private fun LoadingContent() {
+	Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+		CircularProgressIndicator()
 	}
 }
 
@@ -126,7 +130,7 @@ fun ListHeader(title: String) {
 		Text(
 			text = title,
 			modifier = Modifier.padding(horizontal = 16.dp),
-			style = MaterialTheme.typography.labelSmall,
+			style = MaterialTheme.typography.labelLarge,
 			color = MaterialTheme.colorScheme.onSurfaceVariant
 		)
 		ListHeaderDivider()

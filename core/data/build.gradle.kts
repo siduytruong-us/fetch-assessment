@@ -35,11 +35,16 @@ android {
 
 dependencies {
 
-	testImplementation(libs.junit)
-	androidTestImplementation(libs.androidx.junit)
-
 	implementation(project(":core:common"))
 	implementation(project(":core:network"))
+	implementation(project(":core:test"))
 	api(project(":core:database"))
 	kapt(libs.hilt.android.compiler)
+
+	testImplementation(libs.junit)
+	testImplementation (libs.mockito.mockito.core)
+	testImplementation (libs.mockito.kotlin)
+	androidTestImplementation(libs.androidx.junit)
+	androidTestImplementation(libs.androidx.espresso.core)
+	androidTestImplementation(libs.androidx.compose.ui.test.junit4)
 }
