@@ -2,22 +2,16 @@ package com.duyts.fetch.core.data.repository
 
 
 import com.duyts.android.database.dao.HiringDao
-import com.duyts.android.database.entity.HiringItemEntity
-import com.duyts.fetch.common.Resource.Resource
 import com.duyts.fetch.common.network.Dispatcher
 import com.duyts.fetch.common.network.NiaDispatchers
-import com.duyts.fetch.core.data.model.GroupHiringItem
 import com.duyts.fetch.core.data.model.HiringItem
-import com.duyts.fetch.core.data.model.toModel
 import com.duyts.fetch.core.data.transformer.DataTransformer
 import com.duyts.fetch.network.AppNetworkDataSource
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class AppRepositoryImpl @Inject constructor(

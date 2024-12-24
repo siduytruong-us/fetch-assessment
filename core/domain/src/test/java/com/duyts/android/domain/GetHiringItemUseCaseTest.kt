@@ -2,18 +2,14 @@ package com.duyts.android.domain
 
 import com.duyts.fetch.common.Resource.Resource
 import com.duyts.fetch.core.data.model.HiringItem
-import com.duyts.fetch.core.data.model.GroupHiringItem
 import com.duyts.fetch.core.data.repository.AppRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
-import org.junit.Test
-
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
 import org.junit.Before
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.junit.MockitoJUnitRunner

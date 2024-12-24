@@ -18,7 +18,6 @@ class GetHiringItemUseCase @Inject constructor(
 		.map { hiringItems ->
 			hiringItems.asSequence()
 				.filter { it.name?.isNotBlank() == true }
-				.sortedBy { it.name }
 				.groupBy { it.listID }
 				.flatMap { (listId, uiHiringItem) ->
 					val headers = listOf(DisplayHiringItem.Header(listId))

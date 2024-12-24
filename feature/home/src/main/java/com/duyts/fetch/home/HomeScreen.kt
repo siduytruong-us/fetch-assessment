@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -20,11 +19,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.duyts.android.domain.DisplayHiringItem
+import com.duyts.android.home.R
 import com.duyts.fetch.core.data.model.HiringItem
 
 @Composable
@@ -40,10 +41,17 @@ fun HomeScreen(
 			}
 		}
 	}
+	/*Other Contents*/
+	HomeContent(state)
+	/*Other Contents*/
+}
+
+@Composable
+fun HomeContent(state: HomeScreenState) {
 	when (state) {
 		is HomeScreenState.Loading -> LoadingContent()
-		is HomeScreenState.Error -> ErrorContent(state as HomeScreenState.Error)
-		is HomeScreenState.Success -> HomeContent(state as HomeScreenState.Success, onRefresh = {})
+		is HomeScreenState.Error -> ErrorContent(state)
+		is HomeScreenState.Success -> ListContent(state)
 	}
 }
 
@@ -54,22 +62,19 @@ private fun LoadingContent() {
 	}
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun HomeContent(
+private fun ListContent(
 	state: HomeScreenState.Success,
-	isRefreshing: Boolean = false,
-	onRefresh: (() -> Unit)? = null,
 ) {
 	LazyColumn(
 		modifier = Modifier
 			.fillMaxSize()
 			.background(MaterialTheme.colorScheme.background),
 	) {
-		items(state.hiringItems) { displayItem ->
+		items(state.hiringItems, key = (DisplayHiringItem::toKey)) { displayItem ->
 			when (displayItem) {
 				is DisplayHiringItem.Header -> {
-					ListHeader("List ID: ${displayItem.listID}")
+					ListHeader(stringResource(R.string.list_id, displayItem.listID))
 				}
 
 				is DisplayHiringItem.Item -> {
@@ -95,13 +100,13 @@ private fun ErrorContent(state: HomeScreenState.Error) {
 @Preview
 @Composable
 fun HomeContentPreview() {
-	HomeContent(HomeScreenState.Success(emptyList()))
+	ListContent(HomeScreenState.Success(emptyList()))
 }
 
 @Preview
 @Composable
 fun ErrorContentPreview() {
-	ErrorContent(HomeScreenState.Error("Error message!"))
+	ErrorContent(HomeScreenState.Error(stringResource(R.string.error_message)))
 }
 
 
@@ -115,12 +120,12 @@ fun HiringItemRow(hiringItem: HiringItem) {
 			.padding(16.dp), verticalAlignment = Alignment.CenterVertically
 	) {
 		Text(
-			text = hiringItem.name ?: "No Name",
+			text = hiringItem.name ?: stringResource(R.string.no_name),
 			style = MaterialTheme.typography.bodyMedium,
 			modifier = Modifier.weight(1f)
 		)
 		Text(
-			text = "ID: ${hiringItem.id}", style = MaterialTheme.typography.bodyMedium
+			text = stringResource(R.string.id, hiringItem.id), style = MaterialTheme.typography.bodyMedium
 		)
 	}
 }
@@ -130,7 +135,7 @@ fun ListHeader(title: String) {
 	Row(
 		modifier = Modifier
 			.padding(vertical = 8.dp, horizontal = 16.dp)
-			.height(16.dp)
+			.height(16.dp),
 	) {
 		ListHeaderDivider()
 		Text(
@@ -152,4 +157,10 @@ private fun RowScope.ListHeaderDivider() {
 			.align(Alignment.CenterVertically),
 		color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
 	)
+}
+
+
+private fun DisplayHiringItem.toKey() = when (this) {
+	is DisplayHiringItem.Header -> listID
+	is DisplayHiringItem.Item -> item.id
 }

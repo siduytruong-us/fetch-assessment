@@ -5,9 +5,6 @@ import retrofit2.Response
 import retrofit2.http.GET
 
 interface AppNetworkService {
-	@GET("/example/get")
-	suspend fun getMessage(): Response<String>
-
 	@GET("/hiring.json")
 	suspend fun getHiringItems(): Response<List<HiringItemsResponseItem>>
 }
