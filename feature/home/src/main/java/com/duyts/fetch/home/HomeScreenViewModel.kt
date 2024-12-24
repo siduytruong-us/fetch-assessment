@@ -29,8 +29,20 @@ class HomeScreenViewModel @Inject constructor(
 	val state: StateFlow<HomeScreenState> = _state
 
 	fun fetchNewHiringItems() = viewModelScope.launch {
-		fetchHiringItemUseCase.invoke()
+		fetchHiringItemUseCase().map { resource ->
+			when (resource) {
+				is Resource.Success -> { /* Show toast */
+				}
+
+				is Resource.Loading -> { /* Show loading*/
+				}
+
+				is Resource.Error -> {/*Show toast*/
+				}
+			}
+		}
 	}
+
 	private fun observeHiringItems(): Flow<HomeScreenState> =
 		getHiringItemUseCase()
 			.map { resource ->
@@ -38,6 +50,7 @@ class HomeScreenViewModel @Inject constructor(
 					is Resource.Success -> {
 						HomeScreenState.Success(hiringItems = resource.data)
 					}
+
 					is Resource.Loading -> HomeScreenState.Loading
 					is Resource.Error -> HomeScreenState.Error(error = resource.message)
 				}
