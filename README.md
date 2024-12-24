@@ -1,5 +1,15 @@
-# Overview MVVM Clean Architecture
+# Fetch Assessment App
+This app retrieves a list of rewards from https://fetch-hiring.s3.amazonaws.com/hiring.json and displays them to users according to these rules:
+* The rewards are grouped by their "listId."
+* They are displayed in a sorted order, first by "listId" and then by "name."
+* Any items without a name are left out.
 
+# Screenshots
+<img src="./github/screenshoot_1.png" alt="screenshoot_1"/>)
+<img src="./github/screenshoot_2.png" alt="screenshoot_2"/>
+
+
+# Overview MVVM Clean Architecture
 **Fetch Assessment** is built based on MVVM Clean Architecture suggested by Google for the best practice Android Development. This target of architecture allows the app to scale, increases the app's robustness, and makes the app easier to test.
 Based on these principles:
 - [Separation of concerns](https://en.wikipedia.org/wiki/Separation_of_concerns): is the most important principle in Android particularly, in software developement general.
@@ -15,12 +25,13 @@ Based on these principles:
 ## Components
 
 To build the architecture, we need to learn and use those following components:
-- Dagger: dependency injection
-- Retrofit: calling api
-- Room: storing local data (such as: newsfeed, news detail,...)
-- DataStore (SharePreference): storing user and system information
-- RxKotlin / Coroutine Flow: handle asynchronous tasks
-- Flow / State / StateFlow: handle UI state
+* **Kotlin Coroutines and Flow**: manage asynchronous operations efficiently, ensure smooth user experiences.
+* **Jetpack Compose**: a modern Android UI toolkit that simplifies the process of building beautiful and dynamic user interfaces through a declarative and composable approach.
+* **Hilt**: dependency injection
+* **ViewModel**: stores and manage UI-related data
+* **StateFlow**: helps in propagating changes in a reactive and efficient manner
+* **Repository and Remote/Local Data Source**: employs Retrofit and Gson to interact with remote data sources and retrieve data efficiently.
+* **UseCase**: A dedicated UseCase is implemented to fetch rewards from the Data and handle business logic according to predefined rules, promoting a clear separation of concerns.
 
 ## Data Flow
 
