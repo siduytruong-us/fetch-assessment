@@ -15,6 +15,13 @@ sealed interface Resource<out T> {
 	data object Loading : Resource<Nothing>
 }
 
-fun <T> Flow<T>.asResource(): Flow<Resource<T>> = map<T, Resource<T>> { Resource.Success(it) }
-	.onStart { emit(Resource.Loading) }
-	.catch { emit(Resource.Error(it.message.orEmpty(), it)) }
+fun <T> Flow<T>.asResource(): Flow<Resource<T>> =
+	map<T, Resource<T>> {
+		Resource.Success(it)
+	}
+		.onStart {
+			emit(Resource.Loading)
+		}
+		.catch {
+			emit(Resource.Error(it.message.orEmpty(), it))
+		}

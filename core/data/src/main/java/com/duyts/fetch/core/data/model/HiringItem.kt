@@ -6,11 +6,13 @@ import com.duyts.fetch.network.model.HiringItemsResponseItem
 data class HiringItem(
 	val name: String? = null,
 	val id: Int,
+	val listID: Int,
 )
 
 fun HiringItemEntity.toModel() = HiringItem(
 	name = name,
 	id = id,
+	listID = listId
 )
 
 

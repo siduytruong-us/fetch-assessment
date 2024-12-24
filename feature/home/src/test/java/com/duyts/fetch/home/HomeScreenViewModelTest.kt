@@ -1,12 +1,14 @@
 package com.duyts.fetch.home
 
+import com.duyts.android.domain.DisplayHiringItem
 import com.duyts.android.domain.FetchHiringItemUseCase
 import com.duyts.android.domain.GetHiringItemUseCase
 import com.duyts.android.test.MainDispatcherRule
-import com.duyts.fetch.common.Resource.Resource
+import com.duyts.fetch.core.data.model.GroupHiringItem
 import com.duyts.fetch.core.data.model.HiringItem
 import com.duyts.fetch.core.data.repository.AppRepository
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertTrue
@@ -17,8 +19,6 @@ import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 import org.mockito.junit.MockitoJUnitRunner
-import org.mockito.kotlin.never
-import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import kotlin.test.assertEquals
 
@@ -39,7 +39,6 @@ class HomeScreenViewModelTest {
 	@Mock
 	private lateinit var appRepository: AppRepository
 
-
 	private lateinit var getHiringItemUseCase: GetHiringItemUseCase
 
 	private lateinit var fetchHiringItemUseCase: FetchHiringItemUseCase
@@ -48,19 +47,16 @@ class HomeScreenViewModelTest {
 	fun setup() {
 		MockitoAnnotations.openMocks(this)
 		getHiringItemUseCase = GetHiringItemUseCase(appRepository)
-		fetchHiringItemUseCase=  FetchHiringItemUseCase(appRepository)
+		fetchHiringItemUseCase = FetchHiringItemUseCase(appRepository)
 	}
 
 
 	@Test
 	fun `observeHiringItems calls fetchHiringItems when data is empty`() = runTest {
-		whenever(appRepository.observeHiringItems()).thenReturn(flowOf(Resource.Success(mapOf())))
-		whenever(appRepository.fetchHiringItems()).thenReturn(Resource.Success(Unit))
+		whenever(appRepository.observeHiringItems()).thenReturn(flowOf(listOf()))
 
 		viewModel = HomeScreenViewModel(getHiringItemUseCase, fetchHiringItemUseCase)
 		val state = viewModel.state.first()
-
-		verify(appRepository).fetchHiringItems()
 
 		assert(state is HomeScreenState.Success)
 		assertTrue((state as HomeScreenState.Success).hiringItems.isEmpty())
@@ -79,7 +75,8 @@ class HomeScreenViewModelTest {
 	@Test
 	fun `observeHiringItems emits Error state`() = runTest {
 		val errorMessage = "Network error"
-		whenever(appRepository.observeHiringItems()).thenReturn(flowOf(Resource.Error(errorMessage)))
+		whenever(appRepository.observeHiringItems())
+			.thenReturn(flow { throw RuntimeException(errorMessage) })
 
 		viewModel = HomeScreenViewModel(getHiringItemUseCase, fetchHiringItemUseCase)
 		val state = viewModel.state.first()
@@ -88,16 +85,40 @@ class HomeScreenViewModelTest {
 		assertEquals(errorMessage, (state as HomeScreenState.Error).error)
 	}
 
+	//
 	@Test
 	fun `observeHiringItems emits Success state with non-empty data`() = runTest {
-		val hiringItems = mapOf(1 to listOf(HiringItem("Alice", 1), HiringItem("Bob", 2)))
-		whenever(appRepository.observeHiringItems()).thenReturn(flowOf(Resource.Success(hiringItems)))
-
+		val hiringItems =
+			listOf(
+				GroupHiringItem(
+					1, listOf(
+						HiringItem("Alice", 1),
+						HiringItem("Bob", 2)
+					)
+				),
+				GroupHiringItem(
+					2, listOf(
+						HiringItem("Cat", 3)
+					)
+				)
+			)
+		val expected = hiringItems.testing()
+		whenever(appRepository.observeHiringItems()).thenReturn(flowOf(hiringItems))
 		viewModel = HomeScreenViewModel(getHiringItemUseCase, fetchHiringItemUseCase)
 		val state = viewModel.state.first()
 
-		verify(appRepository, never()).fetchHiringItems()
 		assert(state is HomeScreenState.Success)
-		assertEquals(hiringItems, (state as HomeScreenState.Success).hiringItems)
+		assertEquals(expected, (state as HomeScreenState.Success).hiringItems)
 	}
 }
+
+private fun List<GroupHiringItem>.testing() = sortedBy { it.listID }
+	.flatMap { uiHiringItem ->
+		val headers = listOf(DisplayHiringItem.Header(uiHiringItem.listID))
+		val items = uiHiringItem.items.asSequence()
+			.filter { it.name?.isNotEmpty() == true }
+			.sortedBy { it.name }
+			.map { DisplayHiringItem.Item(it) }
+		headers + items
+	}
+

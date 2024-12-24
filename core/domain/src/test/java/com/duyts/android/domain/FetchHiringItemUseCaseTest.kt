@@ -3,6 +3,9 @@ package com.duyts.android.domain
 import com.duyts.fetch.common.Resource.Resource
 import com.duyts.fetch.core.data.repository.AppRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -29,23 +32,23 @@ class FetchHiringItemUseCaseTest {
 
 	@Test
 	fun `invoke delegates to appRepository fetchHiringItems`() = runTest {
-		val expectedResource = Resource.Success(Unit)
-		whenever(appRepository.fetchHiringItems()).thenReturn(expectedResource)
+		whenever(appRepository.fetchHiringItems()).thenReturn(flowOf(Unit))
 
-		val result = fetchHiringItemUseCase()
+		val result = fetchHiringItemUseCase().toList()
 
-		assertEquals(expectedResource, result)
 		verify(appRepository).fetchHiringItems()
+		assert(result[0] is Resource.Loading)
+		assertTrue((result[1] as Resource.Success).data == Unit)
 	}
 
 	@Test
 	fun `invoke returns error from appRepository`() = runTest {
-		val expectedError = Resource.Error("Failed to fetch items")
-		whenever(appRepository.fetchHiringItems()).thenReturn(expectedError)
+		val expectedError = "Failed to fetch items"
+		whenever(appRepository.fetchHiringItems())
+			.thenReturn(flow { throw RuntimeException(expectedError) })
 
-		val result = fetchHiringItemUseCase()
-
-		assertEquals(expectedError, result)
-		verify(appRepository).fetchHiringItems()
+		val result: List<Resource<Unit>> = fetchHiringItemUseCase().toList()
+		assert(result[0] is Resource.Loading)
+		assertTrue((result[1] as Resource.Error).message == expectedError)
 	}
 }

@@ -1,16 +1,17 @@
 package com.duyts.fetch.core.data
 
+import app.cash.turbine.test
 import com.duyts.android.database.dao.HiringDao
 import com.duyts.android.database.entity.HiringItemEntity
 import com.duyts.android.test.MainDispatcherRule
-import com.duyts.fetch.common.Resource.Resource
-import com.duyts.fetch.core.data.ext.testingObserveHiringItems
 import com.duyts.fetch.core.data.model.HiringItem
+import com.duyts.fetch.core.data.model.toModel
 import com.duyts.fetch.core.data.repository.AppRepositoryImpl
 import com.duyts.fetch.core.data.transformer.DataTransformer
 import com.duyts.fetch.network.AppNetworkDataSource
 import com.duyts.fetch.network.model.HiringItemsResponseItem
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -20,6 +21,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
+import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
 import org.mockito.junit.MockitoJUnitRunner
 import org.mockito.kotlin.any
@@ -28,7 +30,6 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -80,11 +81,10 @@ class AppRepositoryTest {
 			whenever(transformer.transform(item)).thenReturn(transformedItems[index])
 		}
 
-		val result = appRepository.fetchHiringItems()
+		appRepository.fetchHiringItems().toList()
 
 		verify(transformer, times(networkItems.size)).transform(any<HiringItemsResponseItem>())
 		verify(hiringDao).insertOrIgnoreHiringItems(transformedItems)
-		assert(result is Resource.Success)
 	}
 
 	@Test
@@ -92,11 +92,10 @@ class AppRepositoryTest {
 		val networkItems = emptyList<HiringItemsResponseItem>()
 		whenever(networkDataSource.getHiringItems()).thenReturn(networkItems)
 
-		val result = appRepository.fetchHiringItems()
+		appRepository.fetchHiringItems().toList()
 
 		verify(hiringDao).insertOrIgnoreHiringItems(emptyList())
 		verify(transformer, never()).transform(any<HiringItemsResponseItem>())
-		assert(result is Resource.Success)
 	}
 
 	@Test
@@ -105,14 +104,15 @@ class AppRepositoryTest {
 		val exception = RuntimeException(exceptionMessage)
 		whenever(networkDataSource.getHiringItems()).thenThrow(exception)
 
-		val result = appRepository.fetchHiringItems()
+		val flow = appRepository.fetchHiringItems()
 
-		assert(result is Resource.Error)
-		assertEquals(exceptionMessage, (result as Resource.Error).message)
-		assertEquals(exception, result.exception)
+		flow.test {
+			val error = awaitError()
+			assert(error.message == exceptionMessage)
+			verify(hiringDao, never()).insertOrIgnoreHiringItems(emptyList())
+			verify(transformer, never()).transform(any<HiringItemsResponseItem>())
+		}
 
-		verify(hiringDao, never()).insertOrIgnoreHiringItems(emptyList())
-		verify(transformer, never()).transform(any<HiringItemsResponseItem>())
 	}
 
 	@Test
@@ -129,7 +129,7 @@ class AppRepositoryTest {
 			whenever(transformer.transform(item)).thenReturn(transformedItems[index])
 		}
 
-		appRepository.fetchHiringItems()
+		appRepository.fetchHiringItems().toList()
 
 		verify(transformer, times(networkItems.size)).transform(any<HiringItemsResponseItem>())
 	}
@@ -140,32 +140,24 @@ class AppRepositoryTest {
 			HiringItemEntity(1, "Alice", 1),
 			HiringItemEntity(1, "Bob", 2)
 		)
-		val transformedItems = entities.testingObserveHiringItems()
 		whenever(hiringDao.observeHiringItems()).thenReturn(flowOf(entities))
-		whenever(transformer.transform(entities)).thenReturn(transformedItems)
+		`when`(transformer.transform(any<HiringItemEntity>())).thenAnswer { invocation ->
+			val entity = invocation.arguments[0] as HiringItemEntity
+			entity.toModel()
+		}
+		val result = appRepository.observeHiringItems().first()
 
-		val result: List<Resource<Map<Int, List<HiringItem>>>> =
-			appRepository.observeHiringItems().toList()
-		//
-		verify(transformer).transform(any<List<HiringItemEntity>>())
+		verify(transformer, times(entities.size)).transform(any<HiringItemEntity>())
 
-		assert(result[0] is Resource.Loading)
-		assertEquals(
-			(result[1] as Resource.Success).data,
-			transformedItems
-		)
+		assertEquals(result, entities.map(HiringItemEntity::toModel))
 	}
 
 	@Test
 	fun `observeHiringItems emits empty data when DAO returns empty list`() = runTest {
 		whenever(hiringDao.observeHiringItems()).thenReturn(flowOf(emptyList()))
-		whenever(transformer.transform(emptyList())).thenReturn(emptyMap())
+		appRepository.observeHiringItems().first()
 
-		val result = appRepository.observeHiringItems().toList()
-
-		assert(result[0] is Resource.Loading)
-		assertTrue((result[1] as Resource.Success).data.isEmpty())
 		verify(hiringDao).observeHiringItems()
-		verify(transformer).transform(emptyList())
+		verify(transformer, never()).transform(any<HiringItemEntity>())
 	}
 }

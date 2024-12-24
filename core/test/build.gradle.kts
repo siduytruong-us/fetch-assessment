@@ -29,4 +29,5 @@ dependencies {
 //	testImplementation (libs.mockito.mockito.core)
 //	testImplementation (libs.mockito.kotlin)
 	api(libs.kotlinx.coroutines.test)
+	api(libs.turbine)
 }

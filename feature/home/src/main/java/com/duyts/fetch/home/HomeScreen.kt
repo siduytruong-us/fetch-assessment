@@ -15,24 +15,35 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.duyts.android.domain.DisplayHiringItem
 import com.duyts.fetch.core.data.model.HiringItem
 
 @Composable
 fun HomeScreen(
 	viewModel: HomeScreenViewModel = hiltViewModel(),
 ) {
-	when (val state = viewModel.state.collectAsStateWithLifecycle().value) {
+	val state by viewModel.state.collectAsStateWithLifecycle()
+
+	LaunchedEffect(state) {
+		(state as? HomeScreenState.Success)?.let { result ->
+			if (result.hiringItems.isEmpty()) {
+				viewModel.fetchNewHiringItems()
+			}
+		}
+	}
+	when (state) {
 		is HomeScreenState.Loading -> LoadingContent()
-		is HomeScreenState.Error -> ErrorContent(state)
-		is HomeScreenState.Success -> HomeContent(state, onRefresh = {})
+		is HomeScreenState.Error -> ErrorContent(state as HomeScreenState.Error)
+		is HomeScreenState.Success -> HomeContent(state as HomeScreenState.Success, onRefresh = {})
 	}
 }
 
@@ -50,28 +61,23 @@ private fun HomeContent(
 	isRefreshing: Boolean = false,
 	onRefresh: (() -> Unit)? = null,
 ) {
-	val items = state.hiringItems
-//	PullToRefreshBox(
-//		isRefreshing = isRefreshing,
-//		onRefresh = { onRefresh?.invoke() },
-//	) {
 	LazyColumn(
 		modifier = Modifier
 			.fillMaxSize()
 			.background(MaterialTheme.colorScheme.background),
 	) {
-		items.forEach { (listId, items) ->
-			item {
-				ListHeader("List ID: $listId")
-			}
-			items(items) { hiringItem ->
-				HiringItemRow(hiringItem)
+		items(state.hiringItems) { displayItem ->
+			when (displayItem) {
+				is DisplayHiringItem.Header -> {
+					ListHeader("List ID: ${displayItem.listID}")
+				}
+
+				is DisplayHiringItem.Item -> {
+					HiringItemRow(displayItem.item)
+				}
 			}
 		}
-//		}
 	}
-
-
 }
 
 @Composable
@@ -89,7 +95,7 @@ private fun ErrorContent(state: HomeScreenState.Error) {
 @Preview
 @Composable
 fun HomeContentPreview() {
-	HomeContent(HomeScreenState.Success(emptyMap()))
+	HomeContent(HomeScreenState.Success(emptyList()))
 }
 
 @Preview
