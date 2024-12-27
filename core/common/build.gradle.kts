@@ -36,6 +36,9 @@ dependencies {
 	api(libs.hilt.android)
 	api(libs.androidx.navigation.compose)
 	api (libs.androidx.hilt.navigation.compose)
+
+	api (libs.kotlinx.serialization.json)
+
 	kapt(libs.hilt.android.compiler)
 
 	testImplementation(project(":core:test"))
