@@ -6,8 +6,6 @@ import androidx.navigation.compose.composable
 import kotlinx.serialization.Serializable
 
 
-const val HOME_ROUTE = "/home"
-
 @Serializable
 object HomeRoute
 

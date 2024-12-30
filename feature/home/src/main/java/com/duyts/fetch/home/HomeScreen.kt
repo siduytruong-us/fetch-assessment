@@ -24,9 +24,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.duyts.android.domain.DisplayHiringItem
 import com.duyts.android.home.R
 import com.duyts.fetch.core.data.model.HiringItem
+import com.duyts.fetch.home.model.DisplayHiringItem
 
 @Composable
 fun HomeScreen(
@@ -71,7 +71,7 @@ private fun ListContent(
 			.fillMaxSize()
 			.background(MaterialTheme.colorScheme.background),
 	) {
-		items(state.hiringItems, key = (DisplayHiringItem::toKey)) { displayItem ->
+		items(state.hiringItems, key = (DisplayHiringItem::getKey)) { displayItem ->
 			when (displayItem) {
 				is DisplayHiringItem.Header -> {
 					ListHeader(stringResource(R.string.list_id, displayItem.listID))
@@ -125,7 +125,8 @@ fun HiringItemRow(hiringItem: HiringItem) {
 			modifier = Modifier.weight(1f)
 		)
 		Text(
-			text = stringResource(R.string.id, hiringItem.id), style = MaterialTheme.typography.bodyMedium
+			text = stringResource(R.string.id, hiringItem.id),
+			style = MaterialTheme.typography.bodyMedium
 		)
 	}
 }
@@ -157,10 +158,4 @@ private fun RowScope.ListHeaderDivider() {
 			.align(Alignment.CenterVertically),
 		color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
 	)
-}
-
-
-private fun DisplayHiringItem.toKey() = when (this) {
-	is DisplayHiringItem.Header -> listID
-	is DisplayHiringItem.Item -> item.id
 }

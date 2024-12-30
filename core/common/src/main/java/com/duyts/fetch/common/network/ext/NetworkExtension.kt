@@ -5,6 +5,7 @@ import retrofit2.HttpException
 import retrofit2.Response
 import java.io.IOException
 import java.io.Serializable
+import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeoutException
 
 suspend fun <T> safeApiCall(apiCall: suspend () -> Response<T>): T {
@@ -18,6 +19,8 @@ suspend fun <T> safeApiCall(apiCall: suspend () -> Response<T>): T {
 
 			else -> throw HttpException(response)
 		}
+	} catch (e: CancellationException) {
+		throw e // must throw to notify coroutine to cancel
 	} catch (exception: Throwable) {
 		throw handleApiError(exception)
 	}

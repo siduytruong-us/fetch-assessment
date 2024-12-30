@@ -1,6 +1,6 @@
 package com.duyts.android.domain
 
-import com.duyts.fetch.common.Resource.Resource
+import com.duyts.fetch.common.result.Resource
 import com.duyts.fetch.core.data.model.HiringItem
 import com.duyts.fetch.core.data.repository.AppRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -18,18 +18,18 @@ import org.mockito.kotlin.whenever
 
 @ExperimentalCoroutinesApi
 @RunWith(MockitoJUnitRunner::class)
-class GetHiringItemUseCaseTest {
+class ObserveHiringItemsUseCaseTest {
 
 	// Mock dependencies
 	@Mock
 	private lateinit var appRepository: AppRepository
 
 	// System under test
-	private lateinit var getHiringItemUseCase: GetHiringItemUseCase
+	private lateinit var observeHiringItemsUseCase: ObserveHiringItemsUseCase
 
 	@Before
 	fun setup() {
-		getHiringItemUseCase = GetHiringItemUseCase(appRepository)
+		observeHiringItemsUseCase = ObserveHiringItemsUseCase(appRepository)
 	}
 
 	@Test
@@ -43,7 +43,7 @@ class GetHiringItemUseCaseTest {
 		val expectedResult = hiringItems.testFilteringAndSorting()
 		whenever(appRepository.observeHiringItems()).thenReturn(flowOf(hiringItems))
 
-		val result = getHiringItemUseCase().toList()
+		val result = observeHiringItemsUseCase().toList()
 
 		assert(result[0] is Resource.Loading)
 		assertEquals((result[1] as Resource.Success).data, expectedResult)
@@ -52,14 +52,5 @@ class GetHiringItemUseCaseTest {
 }
 
 
-private fun List<HiringItem>.testFilteringAndSorting() = this.asSequence()
-	.filter { it.name?.isNotBlank() == true }
-	.sortedBy { it.name }
-	.groupBy { it.listID }
-	.flatMap { (listId, uiHiringItem) ->
-		val headers = listOf(DisplayHiringItem.Header(listId))
-		val items = uiHiringItem.asSequence()
-			.sortedBy { it.name }
-			.map { DisplayHiringItem.Item(it) }
-		headers + items
-	}
+private fun List<HiringItem>.testFilteringAndSorting() =
+	this.filter { it.name?.isNotBlank() == true }

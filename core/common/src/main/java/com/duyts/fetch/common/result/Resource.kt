@@ -1,4 +1,4 @@
-package com.duyts.fetch.common.Resource
+package com.duyts.fetch.common.result
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
