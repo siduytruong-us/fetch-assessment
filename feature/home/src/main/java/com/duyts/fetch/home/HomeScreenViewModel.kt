@@ -30,7 +30,9 @@ class HomeScreenViewModel @Inject constructor(
 	val state: StateFlow<HomeScreenState> = _state
 
 	fun fetchNewHiringItems() = viewModelScope.launch {
-		fetchHiringItemUseCase()
+		fetchHiringItemUseCase().collect { _: Resource<Unit> ->
+			//Todo::
+		}
 	}
 
 	private fun observeHiringItems(): Flow<HomeScreenState> =
