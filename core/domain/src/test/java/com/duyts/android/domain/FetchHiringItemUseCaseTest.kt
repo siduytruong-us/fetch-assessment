@@ -32,23 +32,24 @@ class FetchHiringItemUseCaseTest {
 
 	@Test
 	fun `invoke delegates to appRepository fetchHiringItems`() = runTest {
-		whenever(appRepository.fetchHiringItems()).thenReturn(flowOf(Unit))
+		val expected = Resource.Success(true)
+		whenever(appRepository.fetchHiringItems()).thenReturn(expected)
 
-		val result = fetchHiringItemUseCase().toList()
+		val result = fetchHiringItemUseCase()
 
 		verify(appRepository).fetchHiringItems()
-		assert(result[0] is Resource.Loading)
-		assertTrue((result[1] as Resource.Success).data == Unit)
+		assertEquals(result, expected)
 	}
 
 	@Test
 	fun `invoke returns error from appRepository`() = runTest {
 		val expectedError = "Failed to fetch items"
+		val expectedException = Exception(expectedError)
 		whenever(appRepository.fetchHiringItems())
-			.thenReturn(flow { throw RuntimeException(expectedError) })
+			.thenReturn(Resource.Error(expectedError, -1, expectedException))
 
-		val result: List<Resource<Unit>> = fetchHiringItemUseCase().toList()
-		assert(result[0] is Resource.Loading)
-		assertTrue((result[1] as Resource.Error).message == expectedError)
+		val result = fetchHiringItemUseCase()
+		verify(appRepository).fetchHiringItems()
+		assertEquals(result, Resource.Error(expectedError, -1, expectedException))
 	}
 }

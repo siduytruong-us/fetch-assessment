@@ -1,20 +1,20 @@
 package com.duyts.fetch.common.network.ext
 
 import com.duyts.fetch.common.network.exception.NetworkException
+import com.duyts.fetch.common.result.Resource
 import retrofit2.HttpException
 import retrofit2.Response
 import java.io.IOException
-import java.io.Serializable
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeoutException
 
-suspend fun <T> safeApiCall(apiCall: suspend () -> Response<T>): T {
+suspend fun <T> safeApiCall(apiCall: suspend () -> Response<T>): Resource<T> {
 	return try {
 		val response = apiCall()
 		when {
 			response.isSuccessful -> {
-				response.body()
-					?: throw Exception("HTTP 200: Empty response body")
+				val data = response.body() ?: throw Exception("HTTP 200: Empty response body")
+				Resource.Success(data)
 			}
 
 			else -> throw HttpException(response)
@@ -22,7 +22,8 @@ suspend fun <T> safeApiCall(apiCall: suspend () -> Response<T>): T {
 	} catch (e: CancellationException) {
 		throw e // must throw to notify coroutine to cancel
 	} catch (exception: Throwable) {
-		throw handleApiError(exception)
+		val error = handleApiError(exception)
+		Resource.Error(error.msg, error.code, exception)
 	}
 }
 

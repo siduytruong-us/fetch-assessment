@@ -3,6 +3,7 @@ package com.duyts.fetch.network.datasource
 import com.duyts.fetch.common.network.Dispatcher
 import com.duyts.fetch.common.network.NiaDispatchers
 import com.duyts.fetch.common.network.ext.safeApiCall
+import com.duyts.fetch.common.result.Resource
 import com.duyts.fetch.network.AppNetworkDataSource
 import com.duyts.fetch.network.AppNetworkService
 import com.duyts.fetch.network.model.HiringItemsResponseItem
@@ -16,7 +17,7 @@ internal class AppNetworkDataSourceImpl @Inject constructor(
 	@Dispatcher(NiaDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : AppNetworkDataSource {
 
-	override suspend fun getHiringItems(): List<HiringItemsResponseItem> =
+	override suspend fun getHiringItems(): Resource<List<HiringItemsResponseItem>> =
 		safeApiCall {
 			networkApi.getHiringItems()
 		}

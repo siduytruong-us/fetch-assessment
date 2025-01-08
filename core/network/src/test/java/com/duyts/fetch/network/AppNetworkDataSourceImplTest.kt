@@ -1,6 +1,8 @@
 package com.duyts.fetch.network
 
 import com.duyts.android.test.MainDispatcherRule
+import com.duyts.fetch.common.network.exception.NetworkException
+import com.duyts.fetch.common.result.Resource
 import com.duyts.fetch.network.datasource.AppNetworkDataSourceImpl
 import com.duyts.fetch.network.model.HiringItemsResponseItem
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -52,14 +54,26 @@ class AppNetworkDataSourceImplTest {
 
 		val result = appNetworkDataSource.getHiringItems()
 
-		assertEquals(mockResponse, result)
+		assertEquals(Resource.Success(mockResponse), result)
 		verify(networkApi).getHiringItems()
 	}
 
-	@Test(expected = Exception::class)
+	@Test
 	fun `getHiringItems throws exception when API call fails`() = runTest {
-		`when`(networkApi.getHiringItems()).thenThrow(RuntimeException("Network Error"))
+		val msg = "Error"
+		val exception = RuntimeException(msg)
+		`when`(networkApi.getHiringItems()).thenThrow(exception)
 
-		appNetworkDataSource.getHiringItems()
+
+		val result = appNetworkDataSource.getHiringItems()
+
+		assertEquals(
+			Resource.Error(
+				"Unexpected error occurred: ${exception.message}",
+				-1,
+				exception
+			), result
+		)
+		verify(networkApi).getHiringItems()
 	}
 }

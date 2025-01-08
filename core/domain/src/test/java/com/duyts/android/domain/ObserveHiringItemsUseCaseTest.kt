@@ -4,6 +4,7 @@ import com.duyts.fetch.common.result.Resource
 import com.duyts.fetch.core.data.model.HiringItem
 import com.duyts.fetch.core.data.repository.AppRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
@@ -15,6 +16,7 @@ import org.mockito.Mock
 import org.mockito.junit.MockitoJUnitRunner
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import kotlin.test.assertTrue
 
 @ExperimentalCoroutinesApi
 @RunWith(MockitoJUnitRunner::class)
@@ -43,10 +45,8 @@ class ObserveHiringItemsUseCaseTest {
 		val expectedResult = hiringItems.testFilteringAndSorting()
 		whenever(appRepository.observeHiringItems()).thenReturn(flowOf(hiringItems))
 
-		val result = observeHiringItemsUseCase().toList()
-
-		assert(result[0] is Resource.Loading)
-		assertEquals((result[1] as Resource.Success).data, expectedResult)
+		val result = observeHiringItemsUseCase().first()
+		assertEquals(result, expectedResult)
 		verify(appRepository).observeHiringItems()
 	}
 }

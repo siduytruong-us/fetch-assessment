@@ -2,64 +2,72 @@ package com.duyts.fetch.common
 
 import com.duyts.fetch.common.network.exception.NetworkException
 import com.duyts.fetch.common.network.ext.safeApiCall
+import com.duyts.fetch.common.result.Resource
 import kotlinx.coroutines.test.runTest
 import okhttp3.ResponseBody
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.junit.MockitoJUnitRunner
-import org.mockito.kotlin.any
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.whenever
 import retrofit2.Response
+import java.io.IOException
+import java.util.concurrent.TimeoutException
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.test.assertContentEquals
 
 @RunWith(MockitoJUnitRunner::class)
 class SafeApiCallTest {
 
 	@Test
-	fun `safeApiCall returns data when response is successful with body`() = runTest {
-		val data = "body"
-		val response = Response.success(data)
-		val apiCall: suspend () -> Response<String> = { response }
+	fun `safeApiCall should return success for successful response`() = runTest {
+		val mockResponse = Response.success("Success Response")
 
-		val result = safeApiCall(apiCall)
+		val result = safeApiCall { mockResponse }
 
-		assertEquals(data, result)
-	}
-
-	@Test(expected = Exception::class)
-	fun `safeApiCall throws exception when response is successful but body is null`() = runTest {
-		// Arrange
-		val data: String? = null
-		val response = Response.success(data)
-		val apiCall: suspend () -> Response<String> = { response }
-		val result = safeApiCall(apiCall)
-		assertEquals(data, result)
+		assertTrue(result is Resource.Success)
+		assertEquals("Success Response", (result as Resource.Success).data)
 	}
 
 	@Test
-	fun `safeApiCall throws exception when response is unsuccessful`() = runTest {
-		// Arrange
-		val errorMsg = "Internal Server Error. Please try again later."
-		val errorCode = 500
-		val expected = NetworkException(errorMsg, errorCode)
-		val response = Response.error<String>(errorCode, ResponseBody.create(null, ""))
-		val apiCall: suspend () -> Response<String> = { response }
+	fun `safeApiCall should return error for HTTP error response`() = runTest {
+		val errorResponse =
+			Response.error<String>(404, okhttp3.ResponseBody.create(null, "Error Body"))
 
-		// Act
-		try {
-			safeApiCall(apiCall)
-		} catch (ex: Exception) {
-			assertEquals(expected, ex)
-		}
+		val result = safeApiCall { errorResponse }
+
+		assertTrue(result is Resource.Error)
+		assertEquals("Resource not found.", (result as Resource.Error).msg)
 	}
 
-	@Test(expected = Exception::class)
-	fun `safeApiCall throws exception when apiCall throws exception`() = runTest {
-		// Arrange
-		val apiCall: suspend () -> Response<String> = { throw Exception("Network error") }
+	@Test
+	fun `safeApiCall should return error for timeout exception`() = runTest {
+		val result = safeApiCall<String> { throw TimeoutException("Request timed out") }
 
-		// Act
-		safeApiCall(apiCall)
+		assertTrue(result is Resource.Error)
+		assertEquals("Request timed out. Please try again.", (result as Resource.Error).msg)
 	}
+
+	// ✅ Test Case 4: IOException (Network Error)
+	@Test
+	fun `safeApiCall should return error for network error`() = runTest {
+		val result = safeApiCall<String> { throw IOException("Network Error") }
+
+		assertTrue(result is Resource.Error)
+		assertEquals("Network error. Please check your connection.", (result as Resource.Error).msg)
+	}
+
+	@Test(expected = CancellationException::class)
+	fun `safeApiCall should throw cancellation exception`() = runTest {
+		safeApiCall<String> { throw CancellationException("Cancelled!") }
+	}
+
+	@Test
+	fun `safeApiCall should return error for unknown exception`() = runTest {
+		val result = safeApiCall<String> { throw Exception("Unknown Error") }
+
+		assertTrue(result is Resource.Error)
+		assertEquals("Unexpected error occurred: Unknown Error", (result as Resource.Error).msg)
+	}
+
 }

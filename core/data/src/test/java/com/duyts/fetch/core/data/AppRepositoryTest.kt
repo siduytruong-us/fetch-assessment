@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.duyts.android.database.dao.HiringDao
 import com.duyts.android.database.entity.HiringItemEntity
 import com.duyts.android.test.MainDispatcherRule
+import com.duyts.fetch.common.result.Resource
 import com.duyts.fetch.core.data.model.HiringItem
 import com.duyts.fetch.core.data.model.toModel
 import com.duyts.fetch.core.data.repository.AppRepositoryImpl
@@ -30,6 +31,7 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -74,14 +76,14 @@ class AppRepositoryTest {
 		)
 		val transformedItems =
 			networkItems.map { HiringItemEntity(it.id, it.name, listId = it.listId) }
-		whenever(networkDataSource.getHiringItems()).thenReturn(networkItems)
+		whenever(networkDataSource.getHiringItems()).thenReturn(Resource.Success(networkItems))
 
 
 		networkItems.forEachIndexed { index, item ->
 			whenever(transformer.transform(item)).thenReturn(transformedItems[index])
 		}
 
-		appRepository.fetchHiringItems().toList()
+		appRepository.fetchHiringItems()
 
 		verify(transformer, times(networkItems.size)).transform(any<HiringItemsResponseItem>())
 		verify(hiringDao).insertOrIgnoreHiringItems(transformedItems)
@@ -90,9 +92,9 @@ class AppRepositoryTest {
 	@Test
 	fun `fetchHiringItems handles empty network response`() = runTest {
 		val networkItems = emptyList<HiringItemsResponseItem>()
-		whenever(networkDataSource.getHiringItems()).thenReturn(networkItems)
+		whenever(networkDataSource.getHiringItems()).thenReturn(Resource.Success(networkItems))
 
-		appRepository.fetchHiringItems().toList()
+		appRepository.fetchHiringItems()
 
 		verify(hiringDao).insertOrIgnoreHiringItems(emptyList())
 		verify(transformer, never()).transform(any<HiringItemsResponseItem>())
@@ -102,16 +104,15 @@ class AppRepositoryTest {
 	fun `fetchHiringItems handle exception network response`() = runTest {
 		val exceptionMessage = "Network error occurred"
 		val exception = RuntimeException(exceptionMessage)
-		whenever(networkDataSource.getHiringItems()).thenThrow(exception)
+		whenever(networkDataSource.getHiringItems())
+			.thenReturn(
+				Resource.Error(exceptionMessage, -1, exception)
+			)
+		val resource = appRepository.fetchHiringItems()
 
-		val flow = appRepository.fetchHiringItems()
-
-		flow.test {
-			val error = awaitError()
-			assert(error.message == exceptionMessage)
-			verify(hiringDao, never()).insertOrIgnoreHiringItems(emptyList())
-			verify(transformer, never()).transform(any<HiringItemsResponseItem>())
-		}
+		assertEquals (resource, Resource.Error(exceptionMessage, -1, exception))
+		verify(hiringDao, never()).insertOrIgnoreHiringItems(emptyList())
+		verify(transformer, never()).transform(any<HiringItemsResponseItem>())
 
 	}
 
@@ -123,13 +124,13 @@ class AppRepositoryTest {
 		)
 		val transformedItems =
 			networkItems.map { HiringItemEntity(it.id, it.name, listId = it.listId) }
-		whenever(networkDataSource.getHiringItems()).thenReturn(networkItems)
+		whenever(networkDataSource.getHiringItems()).thenReturn(Resource.Success(networkItems))
 
 		networkItems.forEachIndexed { index, item ->
 			whenever(transformer.transform(item)).thenReturn(transformedItems[index])
 		}
 
-		appRepository.fetchHiringItems().toList()
+		appRepository.fetchHiringItems()
 
 		verify(transformer, times(networkItems.size)).transform(any<HiringItemsResponseItem>())
 	}

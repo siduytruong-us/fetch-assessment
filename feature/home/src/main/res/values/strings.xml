@@ -4,4 +4,5 @@
     <string name="no_name">No Name</string>
     <string name="error_message">Error message...</string>
     <string name="list_id">List ID: %1$s</string>
+    <string name="network_failed">Network failed!</string>
 </resources>
